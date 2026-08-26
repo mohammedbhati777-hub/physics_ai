@@ -1,1 +1,288 @@
 @import "tailwindcss";
+
+@theme {
+  --font-display: "Big Shoulders Display", "Instrument Sans", sans-serif;
+  --font-body: "Instrument Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-paper: #f4f2ea;
+  --color-panel: #fbfaf5;
+  --color-panel2: #efede3;
+  --color-ink: #22282f;
+  --color-ink2: #5b646e;
+  --color-ink3: #8b929b;
+  --color-line: #d9d5c6;
+  --color-grid: #e6e3d5;
+  --color-stage: #22282f;
+  --color-stageline: #39424c;
+
+  --color-motion: #2f5fbe;
+  --color-motionlt: #7fb2e5;
+  --color-energy: #1f7a4d;
+  --color-energylt: #7fc79a;
+  --color-force: #bf3b34;
+  --color-forcelt: #e58a7e;
+  --color-warn: #b97a18;
+  --color-warnlt: #dcae60;
+  --color-field: #6b4fa3;
+  --color-fieldlt: #a98fd6;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- ambient graph-paper environment ---------- */
+.lab-bg {
+  background-color: var(--color-paper);
+  background-image:
+    linear-gradient(to right, rgba(34, 40, 47, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 40, 47, 0.045) 1px, transparent 1px),
+    linear-gradient(to right, rgba(34, 40, 47, 0.028) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 40, 47, 0.028) 1px, transparent 1px);
+  background-size:
+    120px 120px,
+    120px 120px,
+    24px 24px,
+    24px 24px;
+}
+.lab-bg-hc {
+  background-image:
+    linear-gradient(to right, rgba(34, 40, 47, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 40, 47, 0.1) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* vertical ruler strip */
+.ruler-y {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(34, 40, 47, 0.35) 0 1px,
+    transparent 1px 8px
+  );
+  background-size: 7px 100%;
+  background-repeat: repeat-y;
+}
+.ruler-x {
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(34, 40, 47, 0.3) 0 1px,
+    transparent 1px 8px
+  );
+  background-size: 100% 7px;
+  background-repeat: repeat-x;
+}
+
+/* ---------- drafting panels ---------- */
+.tick-corners {
+  position: relative;
+}
+.tick-corners::before,
+.tick-corners::after {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+}
+.tick-corners::before {
+  top: -1px;
+  left: -1px;
+  border-top: 2px solid var(--color-ink);
+  border-left: 2px solid var(--color-ink);
+}
+.tick-corners::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 2px solid var(--color-ink);
+  border-right: 2px solid var(--color-ink);
+}
+
+.stage-frame {
+  box-shadow:
+    inset 0 0 0 1px #39424c,
+    0 10px 30px -18px rgba(34, 40, 47, 0.55);
+}
+
+/* ---------- tactile slider ---------- */
+input[type="range"].tact {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+  cursor: ew-resize;
+}
+input[type="range"].tact::-webkit-slider-runnable-track {
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    var(--track-fill, var(--color-ink)) 0 var(--fill, 50%),
+    var(--color-line) var(--fill, 50%) 100%
+  );
+}
+input[type="range"].tact::-moz-range-track {
+  height: 2px;
+  background: var(--color-line);
+}
+input[type="range"].tact::-moz-range-progress {
+  height: 2px;
+  background: var(--track-fill, var(--color-ink));
+}
+input[type="range"].tact::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -8px;
+  width: 16px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--color-panel);
+  border: 1.5px solid var(--color-ink);
+  box-shadow: 0 1px 0 rgba(34, 40, 47, 0.25);
+  transition: transform 0.12s ease;
+}
+input[type="range"].tact::-moz-range-thumb {
+  width: 14px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--color-panel);
+  border: 1.5px solid var(--color-ink);
+}
+input[type="range"].tact:active::-webkit-slider-thumb,
+input[type="range"].tact:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.18);
+}
+input[type="range"].tact:focus-visible {
+  outline: 2px dashed var(--color-motion);
+  outline-offset: 4px;
+}
+
+/* ---------- buttons ---------- */
+.btn-press {
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    background-color 0.15s ease;
+}
+.btn-press:active {
+  transform: translateY(1.5px);
+  box-shadow: none !important;
+}
+
+/* ---------- keyframes ---------- */
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--rot, 0deg));
+  }
+  50% {
+    transform: translateY(-14px) rotate(var(--rot, 0deg));
+  }
+}
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes blink-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes scan {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 28px 0;
+  }
+}
+.anim-rise {
+  animation: rise-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.anim-float {
+  animation: floaty 9s ease-in-out infinite;
+}
+.anim-blink {
+  animation: blink-soft 1.4s ease-in-out infinite;
+}
+.hazard {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(185, 122, 24, 0.16) 0 8px,
+    transparent 8px 16px
+  );
+}
+.marching {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--color-ink) 0 10px,
+    transparent 10px 18px
+  );
+  background-size: 28px 2px;
+  background-repeat: repeat-x;
+  animation: scan 1.2s linear infinite;
+  height: 2px;
+}
+
+.notebook-rule {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 27px,
+    rgba(47, 95, 190, 0.16) 27px 28px
+  );
+}
+
+::selection {
+  background: rgba(47, 95, 190, 0.22);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border: 3px solid var(--color-paper);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-float,
+  .marching,
+  .anim-blink {
+    animation: none;
+  }
+  .anim-rise {
+    animation-duration: 0.01s;
+  }
+}
+
+.hc body,
+body.hc {
+  --color-paper: #ffffff;
+  --color-panel: #ffffff;
+  --color-line: #9aa0a8;
+  --color-ink2: #3c434b;
+}
