@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { fmt, sfx, useStageCanvas } from "../lib/labkit";
 import type { SimKind } from "../physics/types";
 import { BenchSim, CollisionSim, FreeFallSim, PendulumSim, ProjectileSim, SpringSim, arrow, type SimProps } from "./simsM";
+import { AtwoodSim, BuoyancySim, CircularSim, InclineSim, TorqueSim } from "./simsN";
 import { CtlBtn, SimShell, TactSlider, Toggle } from "./ui";
 
 /* ============================================================
@@ -55,6 +56,7 @@ export function OhmSim({ vars }: SimProps) {
     c.lineTo(rx + 52, T);
     c.stroke();
     mono(c, `R = ${fmt(vars.R)} Ω`, rx, T - 16, ST.amber, "center", 10);
+    mono(c, `V_R = IR = ${fmt(I * vars.R)} V`, rx, T + 34, ST.body, "center", 9);
 
     // lamp (right)
     const lx = R, ly = by;
@@ -118,6 +120,7 @@ export function WavesSim({ vars }: SimProps) {
   const [second, setSecond] = useState(true);
   const [f2, setF2] = useState(2);
   const [phase, setPhase] = useState(0);
+  const [standing, setStanding] = useState(false);
   const st = useRef({ t: 0, last: -1 });
 
   const canvasRef = useStageCanvas((c, w, h) => {
@@ -160,10 +163,31 @@ export function WavesSim({ vars }: SimProps) {
       c.stroke(); c.globalAlpha = 1;
     };
 
-    trace(y1, ST.blue, 1.4, second ? 0.4 : 0.9);
-    if (second) {
-      trace(y2, ST.purple, 1.4, 0.4);
-      trace((x) => y1(x) + y2(x), ST.amber, 2.4);
+    if (standing) {
+      // y = 2A sin(kx) cos(ωt) — two counter-propagating waves superposed
+      const env = (x: number) => 2 * A * Math.abs(Math.sin(k1 * x));
+      c.strokeStyle = ST.amber; c.setLineDash([4, 4]); c.globalAlpha = 0.5; c.lineWidth = 1;
+      c.beginPath();
+      for (let px = 20; px <= w - 20; px += 3) { const x = (px - 20) / sc; const yy = midY - env(x) * amp; if (px === 20) c.moveTo(px, yy); else c.lineTo(px, yy); }
+      c.stroke();
+      c.beginPath();
+      for (let px = 20; px <= w - 20; px += 3) { const x = (px - 20) / sc; const yy = midY + env(x) * amp; if (px === 20) c.moveTo(px, yy); else c.lineTo(px, yy); }
+      c.stroke();
+      c.setLineDash([]); c.globalAlpha = 1;
+      trace((x) => 2 * A * Math.sin(k1 * x) * Math.cos(w1 * t), ST.blue, 2.2);
+      for (let i = 0; i <= Math.floor(span * 2); i++) {
+        const xn = (i * lambda) / 2;
+        if (xn > span) break;
+        c.fillStyle = ST.red;
+        c.beginPath(); c.arc(20 + xn * sc, midY, 3, 0, Math.PI * 2); c.fill();
+      }
+      mono(c, `standing wave — nodes every λ/2 = ${fmt(lambda / 2)} m; resonance when the tank fits n·λ/2`, 14, h - 14, ST.amber, "left", 9.5);
+    } else {
+      trace(y1, ST.blue, 1.4, second ? 0.4 : 0.9);
+      if (second) {
+        trace(y2, ST.purple, 1.4, 0.4);
+        trace((x) => y1(x) + y2(x), ST.amber, 2.4);
+      }
     }
 
     mono(c, `wave speed v = fλ = ${fmt(v)} m/s`, 14, 22, ST.body, "left", 10.5);
@@ -180,7 +204,12 @@ export function WavesSim({ vars }: SimProps) {
   return (
     <SimShell fig="FIG. 07" title="Wave Tank" footnote="Linear superposition in a non-dispersive medium; the medium fixes v = fλ."
       h="h-[330px]"
-      right={<Toggle on={second} onClick={() => setSecond(!second)} label="2nd wave" />}
+      right={
+        <div className="flex items-center gap-1.5">
+          <Toggle on={second} onClick={() => { setSecond(!second); setStanding(false); }} label="2nd wave" />
+          <Toggle on={standing} onClick={() => { setStanding(!standing); setSecond(false); }} label="Standing" />
+        </div>
+      }
     >
       <canvas ref={canvasRef} />
       {second && (
@@ -426,10 +455,15 @@ export function OrbitSim({ vars, whatif }: SimProps) {
 }
 
 /* ================= GAS CHAMBER (standalone thermo) ================= */
-export function GasChamber() {
-  const [T, setT] = useState(300);
-  const [V, setV] = useState(40);
-  const [N, setN] = useState(70);
+export function GasChamber({ vars }: { vars?: Record<string, number> }) {
+  const [Ti, setT] = useState(300);
+  const [Vi, setV] = useState(40);
+  const [Ni, setN] = useState(70);
+  const driven = !!(vars && vars.T !== undefined);
+  const T = driven ? vars!.T : Ti;
+  const V = driven ? (vars!.V ?? 0.1) * 1000 : Vi;
+  const N = driven ? Math.round(Math.min(140, Math.max(10, (vars!.n ?? 2) * 35))) : Ni;
+  const n = driven ? vars!.n ?? 2 : 0.5;
   const parts = useRef<{ x: number; y: number; vx: number; vy: number }[]>([]);
   const st = useRef({ last: -1 });
 
@@ -444,7 +478,7 @@ export function GasChamber() {
     const now = performance.now() / 1000;
     const dt = st.current.last < 0 ? 0.016 : Math.min(0.05, now - st.current.last);
     st.current.last = now;
-    const boxW = (V / 100) * (w - 140);
+    const boxW = Math.min(1, Math.max(0.12, V / 100)) * (w - 140);
     const boxH = h - 120;
     const bx = 40, by = 50;
     const speed = Math.sqrt(T / 300) * 90;
@@ -477,7 +511,6 @@ export function GasChamber() {
       c.fill();
     }
 
-    const n = 0.5; // moles
     const P = (n * 8.314 * T) / (V / 1000); // Pa
     mono(c, `T = ${fmt(T)} K`, 14, 22, ST.red, "left", 10.5);
     mono(c, `V = ${fmt(V)} L`, 14, 38, ST.blue, "left", 10.5);
@@ -491,11 +524,18 @@ export function GasChamber() {
       h="h-[360px]"
     >
       <canvas ref={canvasRef} />
-      <div className="absolute bottom-3 left-3 flex w-64 flex-col gap-2 border border-stageline bg-[rgba(27,32,38,0.92)] p-3">
-        <TactSlider sym="T" name="Temperature" unit="K" min={100} max={600} step={5} value={T} onChange={setT} color="#e58a7e" />
-        <TactSlider sym="V" name="Volume" unit="L" min={15} max={100} step={1} value={V} onChange={setV} color="#7fb2e5" />
-        <TactSlider sym="N" name="Particles" unit="" min={10} max={140} step={5} value={N} onChange={setN} color="#c9d0d7" />
-      </div>
+      {!driven && (
+        <div className="absolute bottom-3 left-3 flex w-64 flex-col gap-2 border border-stageline bg-[rgba(27,32,38,0.92)] p-3">
+          <TactSlider sym="T" name="Temperature" unit="K" min={100} max={600} step={5} value={Ti} onChange={setT} color="#e58a7e" />
+          <TactSlider sym="V" name="Volume" unit="L" min={15} max={100} step={1} value={Vi} onChange={setV} color="#7fb2e5" />
+          <TactSlider sym="N" name="Particles" unit="" min={10} max={140} step={5} value={Ni} onChange={setN} color="#c9d0d7" />
+        </div>
+      )}
+      {driven && (
+        <p className="absolute bottom-2 left-3 font-mono text-[8.5px] uppercase tracking-[0.14em] text-[#9aa4ae]">
+          driven by the equation panel — n = {fmt(n)} mol
+        </p>
+      )}
     </SimShell>
   );
 }
@@ -596,4 +636,9 @@ export const SIMS: Record<SimKind, React.ComponentType<SimProps>> = {
   optics: OpticsSim,
   gas: GasChamber as unknown as React.ComponentType<SimProps>,
   orbit: OrbitSim,
+  incline: InclineSim,
+  circular: CircularSim,
+  torque: TorqueSim,
+  buoyancy: BuoyancySim,
+  atwood: AtwoodSim,
 };

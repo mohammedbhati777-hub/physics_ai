@@ -181,10 +181,11 @@ function buildSpec(kind: GraphKind, v: Record<string, number>, w?: Record<string
     }
     case "grav-r": {
       const GMm = 6.674e-11 * v.m1 * v.m2;
-      const f = (x: number) => GMm / Math.max(x * x, 1e-9);
-      const fw = w ? (x: number) => (6.674e-11 * (w.m1 ?? v.m1) * (w.m2 ?? v.m2)) / Math.max(x * x, 1e-9) : undefined;
-      return base(lin(f, 0.5, 10), "r (m)", "F (N)",
-        { x: v.r, y: f(v.r) }, `F = ${fmt(f(v.r))} N`, BLUE, fw && lin(fw, 0.5, 10));
+      const f = (x: number) => GMm / Math.max(x * x, 1e-30);
+      const fw = w ? (x: number) => (6.674e-11 * (w.m1 ?? v.m1) * (w.m2 ?? v.m2)) / Math.max(x * x, 1e-30) : undefined;
+      const x1 = Math.max(v.r * 1.5, 10);
+      return base(lin(f, x1 * 0.05, x1), "r (m)", "F (N)",
+        { x: v.r, y: f(v.r) }, `F = ${fmt(f(v.r))} N`, BLUE, fw && lin(fw, x1 * 0.05, x1));
     }
     case "snell": {
       const f = (d: number) => {
@@ -195,6 +196,50 @@ function buildSpec(kind: GraphKind, v: Record<string, number>, w?: Record<string
       for (let d = 5; d <= 85; d += 1) { const y = f(d); if (!isNaN(y)) { xs.push(d); ys.push(y); } }
       return base({ xs, ys }, "θ₁ (°)", "θ₂ (°)",
         { x: v.th1, y: f(v.th1) }, `θ₂ = ${fmt(f(v.th1))}°`, PURPLE);
+    }
+    case "incline-a": {
+      const f = (d: number) => {
+        const r = (d * Math.PI) / 180;
+        return Math.max(0, 9.8 * (Math.sin(r) - v.mu * Math.cos(r)));
+      };
+      const fw = w ? (d: number) => {
+        const r = (d * Math.PI) / 180;
+        return Math.max(0, 9.8 * (Math.sin(r) - (w.mu ?? v.mu) * Math.cos(r)));
+      } : undefined;
+      return base(lin(f, 5, 60), "θ (°)", "a (m/s²)",
+        { x: v.th, y: f(v.th) }, `a = ${fmt(f(v.th))} m/s²`, BLUE, fw && lin(fw, 5, 60));
+    }
+    case "circ-v": {
+      const f = (x: number) => (v.m * x * x) / v.r;
+      const fw = w ? (x: number) => ((w.m ?? v.m) * x * x) / (w.r ?? v.r) : undefined;
+      const x1 = Math.max(v.v * 1.5, 10);
+      return base(lin(f, 0.5, x1), "v (m/s)", "F_c (N)",
+        { x: v.v, y: f(v.v) }, `F_c = ${fmt(f(v.v))} N`, BLUE, fw && lin(fw, 0.5, x1));
+    }
+    case "torque-r": {
+      const f = (x: number) => v.F * x;
+      const fw = w ? (x: number) => (w.F ?? v.F) * x : undefined;
+      return base(lin(f, 0.1, Math.max(v.r * 1.5, 2)), "r (m)", "τ (N·m)",
+        { x: v.r, y: f(v.r) }, `τ = ${fmt(f(v.r))} N·m`, AMBER, fw && lin(fw, 0.1, Math.max(v.r * 1.5, 2)));
+    }
+    case "buoy-rho": {
+      const f = (x: number) => Math.min(1, x / 1000) * 100;
+      const xs: number[] = []; const ys: number[] = [];
+      for (let d = 100; d <= 2000; d += 25) { xs.push(d); ys.push(f(d)); }
+      return base({ xs, ys }, "ρ object (kg/m³)", "submerged %",
+        { x: v.rho, y: f(v.rho) }, `${fmt(f(v.rho))}% submerged`, GREEN);
+    }
+    case "atwood-a": {
+      const f = (x: number) => Math.abs(((v.m1 - x) * 9.8) / (v.m1 + x));
+      const fw = w ? (x: number) => Math.abs((((w.m1 ?? v.m1) - x) * 9.8) / ((w.m1 ?? v.m1) + x)) : undefined;
+      return base(lin(f, 0.5, 20), "m₂ (kg)", "|a| (m/s²)",
+        { x: v.m2, y: f(v.m2) }, `a = ${fmt(((v.m1 - v.m2) * 9.8) / (v.m1 + v.m2))} m/s²`, BLUE, fw && lin(fw, 0.5, 20));
+    }
+    case "gas-pt": {
+      const f = (x: number) => (v.n * 8.314 * x) / v.V;
+      const fw = w ? (x: number) => ((w.n ?? v.n) * 8.314 * x) / (w.V ?? v.V) : undefined;
+      return base(lin(f, 100, 600), "T (K)", "P (Pa)",
+        { x: v.T, y: f(v.T) }, `P = ${fmt(f(v.T) / 1000)} kPa`, PURPLE, fw && lin(fw, 100, 600));
     }
   }
 }

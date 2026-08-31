@@ -319,6 +319,13 @@ export function ProjectileSim({ vars, whatif, buffer }: SimProps) {
     S.forEach((s, j) => { const px = X(s.x), py = Y(s.y); if (j === 0) c.moveTo(px, py); else c.lineTo(px, py); });
     c.stroke(); c.globalAlpha = 1;
 
+    // ground shadow — shrinks as the ball climbs
+    const shScale = Math.max(0.25, 1 - cur.y / Math.max(1, Math.max(...S.map((q) => q.y))));
+    c.globalAlpha = 0.28 * shScale;
+    c.fillStyle = "#000";
+    c.beginPath(); c.ellipse(X(cur.x), groundY + 4, 4 + 8 * shScale, 2.6, 0, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 1;
+
     // ball
     const bx = X(cur.x), by = Y(cur.y);
     c.beginPath(); c.arc(bx, by, 7, 0, Math.PI * 2);

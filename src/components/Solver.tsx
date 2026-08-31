@@ -77,7 +77,7 @@ export function Workspace({ solved, parse, onAsk, signal }: { solved: Solved; pa
     return out;
   }, [solved, vars, assumed]);
 
-  const current = useMemo(() => buildSolved(solved.id, values, solved.question), [solved, values]);
+  const current = useMemo(() => buildSolved(solved.id, values, solved.question, solved.source), [solved, values]);
   const whatifSolved = useMemo(() => (whatif ? whatIfSolve(current, whatif) : null), [current, whatif]);
 
   const Sim = SIMS[current.simKind];
@@ -167,6 +167,7 @@ export function Workspace({ solved, parse, onAsk, signal }: { solved: Solved; pa
         <Tag color="var(--color-field)">
           Variables · {current.variables.map((v) => v.sym).join("  ")}
         </Tag>
+        {current.source && <Tag color="var(--color-energy)">Source · {current.source}</Tag>}
         {parse.special?.startsWith("light-slow") && <Tag color="var(--color-force)">WHAT-IF · speed of light</Tag>}
       </div>
 

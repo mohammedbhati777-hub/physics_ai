@@ -8,6 +8,7 @@ import type { ConceptId, ParseResult, Solved } from "./physics/types";
 import { LabHome, HomeFootnote } from "./components/LabHome";
 import { LabsView } from "./components/Labs";
 import { NotebookView } from "./components/Notebook";
+import { RealLife, TextbookBank } from "./components/TextbookReal";
 import { Workspace } from "./components/Solver";
 import { Btn, Chip, Icon } from "./components/ui";
 
@@ -23,7 +24,7 @@ export type DemoAction =
   | { type: "setVar"; varId: string; value: number };
 export type DemoSignal = { nonce: number } & DemoAction;
 
-type View = "home" | "lab" | "notebook";
+type View = "home" | "lab" | "real" | "bank" | "notebook";
 
 export default function App() {
   const [view, setView] = useState<View>("home");
@@ -93,7 +94,12 @@ export default function App() {
     }
   };
 
-  const openLab = (id: string) => { setWs(null); setClarify(null); setLab(id); setView("lab"); };
+  const openLab = (id: string) => {
+    setWs(null); setClarify(null); setDetected(null);
+    if (id === "__bank") { setView("bank"); return; }
+    if (id === "__real") { setView("real"); return; }
+    setLab(id); setView("lab");
+  };
 
   /* ---------------- expo mode ---------------- */
   const emit = (a: DemoAction) => setSignal((s) => ({ ...a, nonce: (s?.nonce || 0) + 1 }));
@@ -156,7 +162,7 @@ export default function App() {
           </button>
 
           <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
-            {([["home", t("workbench")], ["lab", t("labs")], ["notebook", t("notebook")]] as [View, string][]).map(([v, label]) => (
+            {([["home", t("workbench")], ["lab", t("labs")], ["real", "Real Life"], ["bank", "Textbook"], ["notebook", t("notebook")]] as [View, string][]).map(([v, label]) => (
               <button key={v} type="button"
                 onClick={() => { setWs(null); setClarify(null); setView(v); sfx.click(); }}
                 className={cx(
@@ -228,6 +234,10 @@ export default function App() {
           <Workspace key={ws.solved.question + ws.solved.id} solved={ws.solved} parse={ws.parse} onAsk={ask} signal={signal} />
         ) : view === "home" ? (
           <LabHome onAsk={ask} onOpenLab={openLab} />
+        ) : view === "real" ? (
+          <RealLife onSolve={(solved, parse) => { setClarify(null); setDetected(null); setWs({ solved, parse }); }} />
+        ) : view === "bank" ? (
+          <TextbookBank onSolve={(solved, parse) => { setClarify(null); setDetected(null); setWs({ solved, parse }); }} />
         ) : view === "lab" ? (
           <div>
             <div className="border-b border-line bg-panel2">

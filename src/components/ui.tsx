@@ -34,6 +34,16 @@ export function Icon({ name, size = 16, className }: { name: string; size?: numb
     case "target": return (<svg {...s}><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="0.8" fill="currentColor" /></svg>);
     case "grid": return (<svg {...s}><rect x="3" y="3" width="18" height="18" /><path d="M3 9h18M3 15h18M9 3v18M15 3v18" /></svg>);
     case "magnet": return (<svg {...s}><path d="M5 4v7a7 7 0 0 0 14 0V4h-4v7a3 3 0 0 1-6 0V4z" /><path d="M5 8h4M15 8h4" /></svg>);
+    case "wrench": return (<svg {...s}><path d="M14 6.5a4 4 0 0 0-5.2 5.2L3 17.5 6.5 21l5.8-5.8A4 4 0 0 0 17.5 10l-3 .5-.5-3z" /></svg>);
+    case "bike": return (<svg {...s}><circle cx="6" cy="16" r="3.5" /><circle cx="18" cy="16" r="3.5" /><path d="M6 16 9.5 8h5L18 16M9.5 8 8 5h3M14.5 8l-2.5 8" /></svg>);
+    case "lift": return (<svg {...s}><rect x="4" y="3" width="16" height="18" /><path d="M4 12h16M9 7.5 12 5l3 2.5M9 16.5 12 19l3-2.5" /></svg>);
+    case "boat": return (<svg {...s}><path d="M3 15h18l-2.5 4h-13z" /><path d="M12 3v12M12 4l6 9H12" /><path d="M2 21c2-1 4-1 6 0s4 1 6 0 4-1 6 0" opacity="0.5" /></svg>);
+    case "crane": return (<svg {...s}><path d="M4 21h16M8 21V5l12 3M8 5 5 8M20 8v4" /><rect x="18.5" y="12" width="3" height="3" /><path d="M8 9h6" /></svg>);
+    case "ramp": return (<svg {...s}><path d="M3 19h18M3 19 17 7h4" /><circle cx="10" cy="13.5" r="2" /><path d="M3 16h4" opacity="0.5" /></svg>);
+    case "fan": return (<svg {...s}><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" /><path d="M12 10.5c0-4 1.5-6.5 4-6.5 2 0 2.5 2 1 3.5-1.3 1.3-3 2-5 3zM13.5 12c4 0 6.5 1.5 6.5 4 0 2-2 2.5-3.5 1-1.3-1.3-2-3-3-5zM10.5 12c-4 0-6.5-1.5-6.5-4 0-2 2-2.5 3.5-1 1.3 1.3 2 3 3 5zM12 13.5c0 4-1.5 6.5-4 6.5-2 0-2.5-2-1-3.5 1.3-1.3 3-2 5-3z" /></svg>);
+    case "ball": return (<svg {...s}><circle cx="12" cy="12" r="8.5" /><path d="M5 6.5c3 2 11 2 14 0M5 17.5c3-2 11-2 14 0M12 3.5c-3 3-3 14 0 17" /></svg>);
+    case "car": return (<svg {...s}><path d="M4 16v-3l2-5h12l2 5v3M4 13h16" /><circle cx="8" cy="17" r="2" /><circle cx="16" cy="17" r="2" /></svg>);
+    case "atom": return (<svg {...s}><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /><ellipse cx="12" cy="12" rx="9" ry="3.6" /><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)" /><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(-60 12 12)" /></svg>);
     default: return null;
   }
 }

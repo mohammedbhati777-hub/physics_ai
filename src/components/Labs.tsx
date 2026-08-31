@@ -11,11 +11,11 @@ import { Btn, Icon, Panel } from "./ui";
    ============================================================ */
 
 const LAB_META: Record<string, { name: string; icon: string; color: string; concepts: ConceptId[]; blurb: string }> = {
-  mech: { name: "Mechanics Lab", icon: "flask", color: "var(--color-motion)", concepts: ["projectile", "freefall", "newton2", "ke", "pe", "momentum", "work", "pendulum", "spring", "collision"], blurb: "The physical bench: carts, towers, springs and pendulums." },
+  mech: { name: "Mechanics Lab", icon: "flask", color: "var(--color-motion)", concepts: ["projectile", "freefall", "newton2", "ke", "pe", "momentum", "work", "pendulum", "spring", "collision", "incline", "circular", "torque", "buoyancy", "atwood"], blurb: "The physical bench: carts, towers, springs, pendulums, ramps, pulleys and tanks." },
   elec: { name: "Electricity Lab", icon: "bolt", color: "var(--color-energy)", concepts: ["ohm"], blurb: "Circuit-board aesthetic: batteries, resistors, live current." },
   waves: { name: "Waves Lab", icon: "wave", color: "var(--color-field)", concepts: ["wave"], blurb: "A fluid tank for superposition, beats and interference." },
   optics: { name: "Optics Lab", icon: "lens", color: "var(--color-warn)", concepts: ["refraction"], blurb: "A clean optical bench: rays, interfaces, lenses." },
-  thermo: { name: "Thermodynamics Lab", icon: "thermo", color: "var(--color-force)", concepts: [], blurb: "A transparent particle chamber obeying PV = nRT." },
+  thermo: { name: "Thermodynamics Lab", icon: "thermo", color: "var(--color-force)", concepts: ["idealgas"], blurb: "A transparent particle chamber obeying PV = nRT." },
   astro: { name: "Astrophysics Lab", icon: "orbit", color: "var(--color-motion)", concepts: ["orbit", "gravforce"], blurb: "A minimal observatory: orbits, escape, inverse-square." },
 };
 

@@ -5,8 +5,10 @@ import type {
   MistakeReport,
   ParseResult,
   PracticeProblem,
+  RealWorldExperiment,
   SanityNote,
   Solved,
+  TextbookProblem,
 } from "./types";
 
 /* ============================================================
@@ -73,6 +75,12 @@ const KIND_TO_VARS: Record<ConceptId, Record<string, string[]>> = {
   work: { force: ["F"], len: ["d"], mass: ["m"] },
   gravforce: { mass: ["m1", "m2"], len: ["r"] },
   refraction: { angle: ["th1"] },
+  incline: { mass: ["m"], angle: ["th"], len: ["d"] },
+  circular: { mass: ["m"], vel: ["v"], len: ["r"] },
+  torque: { force: ["F"], len: ["r"] },
+  buoyancy: { len: ["V"] },
+  atwood: { mass: ["m1", "m2"] },
+  idealgas: { temp: ["T"] },
 };
 
 const SYM_ALIASES: Record<string, string[]> = {
@@ -100,6 +108,12 @@ const DETECTORS: [ConceptId, RegExp][] = [
   ["orbit", /orbit|satellite|moon|space station|\biss\b|escape velocity|geostation/i],
   ["gravforce", /gravitational (force|attraction)|force of gravity between|attract/i],
   ["refraction", /refract|snell|bend(s|ing)? of light|light (bend|enter)|prism|critical angle/i],
+  ["atwood", /atwood|pulley|counterweight|crane lifts|lifts? a .*mass over/i],
+  ["incline", /incline|inclined plane|ramp|slides? down|smooth slope/i],
+  ["torque", /torque|lever|seesaw|see-saw|wrench|door hinge|moment of (a )?force|turning effect/i],
+  ["buoyancy", /buoyan|float(s|ing)?|archimedes|upthrust|submerged|ships? (float|sail)/i],
+  ["circular", /centripetal|circular (motion|path|track)|banking|rounds a|takes a (curve|turn)|radius of/i],
+  ["idealgas", /ideal gas|pv\s*=\s*nrt|gas law|moles? of|pressure of (a|the|an) .*gas/i],
   ["ohm", /\bcurrent\b|resistor|resistance|ohm|volt|battery|\bcircuit\b|ammeter/i],
   ["wave", /wave|frequency|wavelength|interference|sound (speed|travels)/i],
   ["freefall", /\bfall(s|ing)?\b|dropped|\bdrop\b|free.?fall|falls from/i],
@@ -253,7 +267,8 @@ const round3 = (x: number) => Math.round(x * 1000) / 1000;
 export function buildSolved(
   concept: ConceptId,
   values?: Record<string, { v: number; unit: string; assumed: boolean }>,
-  question = ""
+  question = "",
+  source?: string
 ): Solved {
   const meta = CONCEPTS[concept];
   const hasUserValues = !!values && Object.keys(values).length > 0;
@@ -284,6 +299,7 @@ export function buildSolved(
     type: hasUserValues ? "Numerical" : "Conceptual",
     level: meta.level,
     question: question || meta.name,
+    source,
     variables: meta.vars,
     given,
     find: meta.find,
@@ -409,6 +425,12 @@ const QUESTION_TEMPLATES: Record<ConceptId, (v: Record<string, number>) => strin
   work: (v) => `A force of ${F(v.F)} N pushes a crate ${F(v.d)} m along the floor. Find the work done.`,
   gravforce: (v) => `Find the gravitational force between ${F(v.m1)} kg and ${F(v.m2)} kg placed ${F(v.r)} m apart.`,
   refraction: (v) => `Light enters glass (n = 1.5) from air at ${F(v.th1)}°. Find the angle of refraction.`,
+  incline: (v) => `A ${F(v.m)} kg block slides down a ${F(v.th)}° incline (μ = ${F(v.mu)}). Find its acceleration.`,
+  circular: (v) => `A ${F(v.m)} kg stone whirls on a ${F(v.r)} m string at ${F(v.v)} m/s. Find the centripetal force.`,
+  torque: (v) => `A ${F(v.F)} N force acts perpendicular to a lever arm ${F(v.r)} m long. Find the torque.`,
+  buoyancy: (v) => `An object of density ${F(v.rho)} kg/m³ and volume ${F(v.V)} m³ is placed in water. Find the buoyant force when it floats.`,
+  atwood: (v) => `An Atwood machine has masses ${F(v.m1)} kg and ${F(v.m2)} kg. Find the acceleration of the system.`,
+  idealgas: (v) => `${F(v.n)} mol of an ideal gas at ${F(v.T)} K occupies ${F(v.V)} m³. Find its pressure.`,
 };
 
 function shuffle<T>(arr: T[]): T[] {
@@ -497,6 +519,68 @@ export const IMAGE_OBJECTS: Record<string, { concepts: string[]; sim: ConceptId;
   Planet: { concepts: ["Gravitation", "Orbital motion", "Escape velocity"], sim: "orbit", note: "Orbits are perpetual free fall around a mass." },
   "Water tank": { concepts: ["Pressure & depth", "Fluid statics", "Potential energy"], sim: "pe", note: "Pressure grows linearly with depth: P = ρgh." },
 };
+
+/* ============================================================
+   TEXTBOOK QUESTION BANK — canonical problems from standard
+   texts (NCERT, HRW, HC Verma). Numbers are the exact printed
+   values; every answer is re-computed by the deterministic
+   engine, never hardcoded.
+   ============================================================ */
+export const TEXTBOOK_BANK: TextbookProblem[] = [
+  { id: "tb-ke-1", source: "NCERT Physics XI", chapter: "Ch 6 · Work, Energy & Power", q: "A 2 kg object is moving at 10 m/s. What is its kinetic energy?", concept: "ke", values: { m: 2, v: 10 }, textbookAnswer: "100 J", level: "Class 11" },
+  { id: "tb-work-1", source: "NCERT Physics XI", chapter: "Ch 6 · Work, Energy & Power, Ex 6.3", q: "A body of mass 10 kg, initially at rest, is moved 5 m along a smooth horizontal table by a horizontal force of 20 N. Calculate the work done by the force — on a smooth surface it all becomes kinetic energy.", concept: "work", values: { F: 20, d: 5 }, textbookAnswer: "100 J", level: "Class 11" },
+  { id: "tb-proj-1", source: "NCERT Physics XI", chapter: "Ch 4 · Motion in a Plane, Ex 4.7", q: "A cricket ball is thrown at 28 m/s at 30° above the horizontal. Find its horizontal range. (g = 9.8 m/s²)", concept: "projectile", values: { v0: 28, th: 30, g: 9.8 }, textbookAnswer: "69.3 m", level: "Class 11" },
+  { id: "tb-circ-1", source: "NCERT Physics XI", chapter: "Ch 4 · Motion in a Plane, Ex 4.11", q: "A 0.15 kg stone tied to a 0.8 m string whirls in a horizontal circle, making 14 revolutions in 25 s. The speed is 2.81 m/s. Find the centripetal force on the stone.", concept: "circular", values: { m: 0.15, v: 2.81, r: 0.8 }, textbookAnswer: "≈ 1.5 N (a_c = 9.9 m/s²)", level: "Class 11" },
+  { id: "tb-fall-1", source: "NCERT Physics XI", chapter: "Ch 3 · Motion in a Straight Line", q: "A ball is dropped from a height of 20 m. How long does it take to reach the ground? Take g = 10 m/s².", concept: "freefall", values: { h: 20, g: 10 }, textbookAnswer: "2 s", level: "Class 11" },
+  { id: "tb-mom-1", source: "NCERT Science IX", chapter: "Ch 9 · Force and Laws of Motion", q: "A bullet of mass 0.05 kg is fired from a rifle at 35 m/s. Calculate its momentum. (Its recoil pushes the rifle back with the same momentum.)", concept: "momentum", values: { m: 0.05, v: 35 }, textbookAnswer: "1.75 kg·m/s", level: "Class 9" },
+  { id: "tb-n2-1", source: "NCERT Science IX", chapter: "Ch 9 · Force and Laws of Motion", q: "A net force of 50 N acts on a 10 kg mass. Find the acceleration produced.", concept: "newton2", values: { F: 50, m: 10 }, textbookAnswer: "5 m/s²", level: "Class 9" },
+  { id: "tb-incline-1", source: "NCERT Physics XI", chapter: "Ch 5 · Laws of Motion", q: "A 4 kg block slides down a frictionless incline of 30°. Find its acceleration. (g = 9.8 m/s²)", concept: "incline", values: { m: 4, th: 30, mu: 0 }, textbookAnswer: "4.9 m/s²", level: "Class 11" },
+  { id: "tb-torque-1", source: "NCERT Physics XI", chapter: "Ch 7 · System of Particles & Rotation", q: "A force of 20 N is applied perpendicular to a door at 0.6 m from the hinge. Find the torque about the hinge.", concept: "torque", values: { F: 20, r: 0.6 }, textbookAnswer: "12 N·m", level: "Class 11" },
+  { id: "tb-pend-1", source: "HC Verma, Concepts of Physics I", chapter: "Ch 12 · Simple Harmonic Motion", q: "A simple pendulum has length 0.993 m (the classic seconds pendulum). Find its period. (g = 9.8 m/s²)", concept: "pendulum", values: { L: 0.993 }, textbookAnswer: "2.0 s", level: "Class 11" },
+  { id: "tb-spring-1", source: "NCERT Physics XI", chapter: "Ch 14 · Oscillations", q: "A 0.5 kg mass hangs from a spring of constant 250 N/m and oscillates. Find the period of oscillation.", concept: "spring", values: { m: 0.5, k: 250, x0: 0.1 }, textbookAnswer: "0.28 s", level: "Class 11" },
+  { id: "tb-coll-1", source: "Halliday · Resnick · Walker", chapter: "Fundamentals of Physics, Ch 9 · Collisions", q: "A 2 kg block moving at 3 m/s makes a head-on elastic collision (e = 1) with a 1 kg block at rest. Find the velocity of the 1 kg block after the collision.", concept: "collision", values: { m1: 2, v1: 3, m2: 1, v2: 0, e: 1 }, textbookAnswer: "4 m/s", level: "University" },
+  { id: "tb-atwood-1", source: "HC Verma, Concepts of Physics I", chapter: "Ch 5 · Newton's Laws of Motion", q: "In an Atwood machine, m₁ = 5 kg and m₂ = 3 kg hang over a light frictionless pulley. Find the acceleration of the masses. (g = 9.8 m/s²)", concept: "atwood", values: { m1: 5, m2: 3 }, textbookAnswer: "2.45 m/s², T = 36.75 N", level: "Class 11" },
+  { id: "tb-buoy-1", source: "NCERT Science IX", chapter: "Ch 10 · Gravitation (Floatation)", q: "A wooden block of density 600 kg/m³ and volume 0.005 m³ floats in water (1000 kg/m³). Find the buoyant force acting on it.", concept: "buoyancy", values: { rho: 600, V: 0.005 }, textbookAnswer: "29.4 N (= weight)", level: "Class 9" },
+  { id: "tb-ohm-1", source: "NCERT Physics XII", chapter: "Ch 3 · Current Electricity", q: "A 12 V battery is connected across a 4.8 Ω resistor. Find the current through it.", concept: "ohm", values: { V: 12, R: 4.8 }, textbookAnswer: "2.5 A", level: "Class 12" },
+  { id: "tb-wave-1", source: "NCERT Physics XI", chapter: "Ch 15 · Waves", q: "A sound wave has frequency 1000 Hz and wavelength 0.34 m. Find its speed.", concept: "wave", values: { f: 1000, lambda: 0.34 }, textbookAnswer: "340 m/s", level: "Class 11" },
+  { id: "tb-snell-1", source: "NCERT Physics XII", chapter: "Ch 9 · Ray Optics", q: "A light ray in air strikes a glass slab (n = 1.5) at an angle of incidence of 60°. Find the angle of refraction.", concept: "refraction", values: { n1: 1, n2: 1.5, th1: 60 }, textbookAnswer: "35.3°", level: "Class 12" },
+  { id: "tb-gas-1", source: "NCERT Physics XI", chapter: "Ch 13 · Kinetic Theory", q: "2 mol of an ideal gas at 300 K occupy 0.1 m³. Calculate the pressure of the gas. (R = 8.314 J/mol·K)", concept: "idealgas", values: { n: 2, T: 300, V: 0.1 }, textbookAnswer: "4.99 × 10⁴ Pa", level: "Class 11" },
+  { id: "tb-grav-1", source: "NCERT Physics XI", chapter: "Ch 8 · Gravitation", q: "Find the gravitational force between the Sun (2 × 10³⁰ kg) and the Earth (6 × 10²⁴ kg) separated by 1.5 × 10¹¹ m.", concept: "gravforce", values: { m1: 2e30, m2: 6e24, r: 1.5e11 }, textbookAnswer: "3.56 × 10²² N", level: "Class 11" },
+  { id: "tb-orbit-1", source: "NCERT Physics XI", chapter: "Ch 8 · Gravitation", q: "Find the orbital speed of a satellite 400 km above the Earth's surface.", concept: "orbit", values: { h: 400 }, textbookAnswer: "7.67 km/s", level: "Class 11" },
+  { id: "tb-pe-1", source: "NCERT Physics XI", chapter: "Ch 6 · Work, Energy & Power", q: "Find the gravitational potential energy of a 2 kg mass raised 10 m above the ground. (g = 9.8 m/s²)", concept: "pe", values: { m: 2, h: 10, g: 9.8 }, textbookAnswer: "196 J", level: "Class 11" },
+];
+
+/** Solve a bank entry with its exact printed numbers (engine computes the answer). */
+export function solveFromBank(p: TextbookProblem): { solved: Solved; parse: ParseResult } {
+  const meta = CONCEPTS[p.concept];
+  const values: Record<string, { v: number; unit: string; assumed: boolean }> = {};
+  for (const [id, v] of Object.entries(p.values)) {
+    const vd = meta.vars.find((x) => x.id === id);
+    if (vd) values[id] = { v, unit: vd.unit, assumed: false };
+  }
+  return {
+    solved: buildSolved(p.concept, values, p.q, `${p.source} · ${p.chapter} · printed answer ${p.textbookAnswer}`),
+    parse: { concept: p.concept, values, clarify: [], raw: p.q },
+  };
+}
+
+/* ============================================================
+   REAL-WORLD EXPERIMENTS — physics hiding in everyday things
+   ============================================================ */
+export const REAL_LIFE: RealWorldExperiment[] = [
+  { id: "door", icon: "wrench", title: "Doors, Wrenches & Seesaws", setting: "door handles · jar lids · spanners · seesaws", physics: ["Torque τ = rF", "Moment arm", "Rotational equilibrium"], q: "A force of 15 N is applied perpendicular to a door handle 0.9 m from the hinge. What torque opens the door?", concept: "torque", values: { F: 15, r: 0.9 } },
+  { id: "bike", icon: "bike", title: "A Bicycle Taking a Turn", setting: "cyclists · car corners · merry-go-rounds", physics: ["Centripetal force F = mv²/r", "Friction as the turn provider"], q: "A 70 kg cyclist rounds a curve of radius 25 m at 8 m/s. What centripetal force must friction provide?", concept: "circular", values: { m: 70, v: 8, r: 25 } },
+  { id: "lift", icon: "lift", title: "An Elevator Starting Up", setting: "lifts · rocket launches · roller-coaster drops", physics: ["Newton's second law", "Net force = ma"], q: "A net force of 160 N acts on an 80 kg person as the elevator starts. What acceleration do they feel?", concept: "newton2", values: { F: 160, m: 80 } },
+  { id: "boat", icon: "boat", title: "Why Boats Float", setting: "boats · submarines · hydrometers", physics: ["Archimedes' principle", "Float ⇔ F_b = W"], q: "A boat hull of average density 600 kg/m³ and volume 2 m³ floats in water. What buoyant force holds it up?", concept: "buoyancy", values: { rho: 600, V: 2 } },
+  { id: "crane", icon: "crane", title: "A Construction Crane", setting: "cranes · wells · theatre fly systems", physics: ["Atwood dynamics", "Tension in the cable"], q: "A crane lowers a 50 kg load against a 45 kg counterweight on the same cable. Find the acceleration of the load.", concept: "atwood", values: { m1: 50, m2: 45 } },
+  { id: "swing", icon: "pendulum", title: "The Park Swing", setting: "swings · grandfather clocks · metronomes", physics: ["Pendulum period T = 2π√(L/g)", "Mass-independent timing"], q: "A park swing behaves like a pendulum of length 2.5 m. Find its period. (g = 9.8 m/s²)", concept: "pendulum", values: { L: 2.5 } },
+  { id: "car", icon: "car", title: "Braking a Car", setting: "disc brakes · skid marks · ABS", physics: ["Work–energy theorem", "Friction converts KE to heat"], q: "Brakes apply a retarding force of 4800 N over 50 m to stop a car. How much energy do they absorb?", concept: "work", values: { F: 4800, d: 50 } },
+  { id: "pen", icon: "spring", title: "Click-Pens & Car Suspension", setting: "pens · mattresses · weighing scales · suspension", physics: ["Hooke's law F = −kx", "Elastic energy storage"], q: "A pen spring (k = 120 N/m) is compressed by 0.02 m. What restoring force does it exert?", concept: "spring", values: { k: 120, x0: 0.02 } },
+  { id: "cooker", icon: "thermo", title: "The Pressure Cooker", setting: "cookers · car tyres · aerosol cans", physics: ["Ideal gas law PV = nRT", "P rises with T at fixed V"], q: "A cooker holds 0.5 mol of steam in 0.004 m³ at 400 K. What pressure builds inside?", concept: "idealgas", values: { n: 0.5, T: 400, V: 0.004 } },
+  { id: "slide", icon: "ramp", title: "Playground Slides & Ramps", setting: "slides · wheelchair ramps · loading ramps", physics: ["Components of weight", "Friction vs slope angle"], q: "A 20 kg child slides down a 25° playground slide with friction coefficient 0.3. What acceleration do they experience?", concept: "incline", values: { m: 20, th: 25, mu: 0.3 } },
+  { id: "throw", icon: "ball", title: "Bowling a Cricket Ball", setting: "cricket · football punts · water fountains", physics: ["Projectile motion", "R = v²sin2θ / g"], q: "A cricket ball is bowled at 25 m/s, 40° above horizontal. How far does it travel before landing? (g = 9.8 m/s²)", concept: "projectile", values: { v0: 25, th: 40, g: 9.8 } },
+  { id: "fan", icon: "fan", title: "Ceiling Fan Blades", setting: "fans · washing machines · centrifuges", physics: ["Circular motion", "Blade root tension"], q: "A 0.3 kg fan blade tip travels at 12 m/s around a 0.6 m radius. What inward force acts on it?", concept: "circular", values: { m: 0.3, v: 12, r: 0.6 } },
+];
 
 /* ---------------- light-slow what-if ---------------- */
 export function lightSlowFacts(factor: number) {

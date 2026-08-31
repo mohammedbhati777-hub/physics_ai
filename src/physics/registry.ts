@@ -77,7 +77,7 @@ export const CONCEPTS: Record<ConceptId, ConceptMeta> = {
     formula: "KE = ½ m v²",
     formulaUnits: "kg · m²/s²  =  J",
     vars: [
-      V("m", "m", "Mass", "kg", 0.2, 20, 0.1, 2, BLUE),
+      V("m", "m", "Mass", "kg", 0.01, 50, 0.01, 2, BLUE),
       V("v", "v", "Velocity", "m/s", 0.5, 40, 0.1, 10, BLUE),
     ],
     whatifPresets: [
@@ -426,8 +426,8 @@ export const CONCEPTS: Record<ConceptId, ConceptMeta> = {
     formula: "F = m a",
     formulaUnits: "kg · m/s²  =  N",
     vars: [
-      V("F", "F", "Force", "N", 0, 200, 1, 50, RED),
-      V("m", "m", "Mass", "kg", 0.5, 50, 0.5, 5, BLUE),
+      V("F", "F", "Force", "N", 0, 2000, 1, 50, RED),
+      V("m", "m", "Mass", "kg", 0.5, 200, 0.5, 5, BLUE),
       V("a", "a", "Acceleration", "m/s²", 0.1, 40, 0.1, 10, AMBER),
     ],
     whatifPresets: [
@@ -938,7 +938,7 @@ export const CONCEPTS: Record<ConceptId, ConceptMeta> = {
     formula: "v = f λ",
     formulaUnits: "(1/s) · m  =  m/s",
     vars: [
-      V("f", "f", "Frequency", "Hz", 0.2, 20, 0.1, 2, PURPLE),
+      V("f", "f", "Frequency", "Hz", 0.2, 2000, 0.1, 2, PURPLE),
       V("lambda", "λ", "Wavelength", "m", 0.05, 10, 0.05, 0.75, PURPLE),
       V("A", "A", "Amplitude", "m", 0.01, 1, 0.01, 0.3, BLUE),
     ],
@@ -1094,8 +1094,8 @@ export const CONCEPTS: Record<ConceptId, ConceptMeta> = {
     formula: "W = F d",
     formulaUnits: "N · m  =  J",
     vars: [
-      V("F", "F", "Force", "N", 1, 200, 1, 40, RED),
-      V("d", "d", "Distance", "m", 0.5, 60, 0.5, 8, BLUE),
+      V("F", "F", "Force", "N", 1, 10000, 1, 40, RED),
+      V("d", "d", "Distance", "m", 0.5, 200, 0.5, 8, BLUE),
       V("m", "m", "Mass", "kg", 0.5, 30, 0.5, 5, AMBER),
     ],
     whatifPresets: [
@@ -1167,9 +1167,9 @@ export const CONCEPTS: Record<ConceptId, ConceptMeta> = {
     formula: "F = G m₁ m₂ / r²",
     formulaUnits: "(m³/kg·s²)·kg² / m²  =  N",
     vars: [
-      V("m1", "m₁", "Mass 1", "kg", 1, 100, 1, 50, BLUE),
-      V("m2", "m₂", "Mass 2", "kg", 1, 100, 1, 80, GREEN),
-      V("r", "r", "Separation", "m", 0.5, 10, 0.1, 1, RED),
+      V("m1", "m₁", "Mass 1", "kg", 0.1, 3e30, 0.1, 50, BLUE),
+      V("m2", "m₂", "Mass 2", "kg", 0.1, 3e30, 0.1, 80, GREEN),
+      V("r", "r", "Separation", "m", 0.5, 2e11, 0.1, 1, RED),
     ],
     whatifPresets: [
       { label: "Distance × 2", varId: "r", mult: 2 },
@@ -1310,6 +1310,430 @@ export const CONCEPTS: Record<ConceptId, ConceptMeta> = {
         hint: "It must travel from higher n to lower n, and…",
         follow: "Yes — from denser to rarer, beyond the critical angle: total internal reflection.",
       },
+    ],
+  },
+
+  /* ------------------------------------------------ inclined plane */
+  incline: {
+    topic: "Mechanics",
+    name: "Inclined Plane",
+    level: "Class 11",
+    simKind: "incline",
+    graphKind: "incline-a",
+    assumption: "Rigid block on a plane; kinetic friction μ constant once sliding; no air drag.",
+    find: "Acceleration down the plane",
+    formula: "a = g(sin θ − μ cos θ)",
+    formulaUnits: "m/s²",
+    vars: [
+      V("m", "m", "Mass", "kg", 0.5, 20, 0.1, 4, BLUE),
+      V("th", "θ", "Incline angle", "°", 5, 60, 1, 30, AMBER),
+      V("mu", "μ", "Friction coeff.", "–", 0, 1, 0.01, 0, RED),
+    ],
+    whatifPresets: [
+      { label: "Friction → zero", varId: "mu", mult: 0 },
+      { label: "μ = 0.2", varId: "mu", mult: -0.2 },
+      { label: "Angle → 45°", varId: "th", mult: 1.5 },
+      { label: "Double mass", varId: "m", mult: 2 },
+    ],
+    compute: (v) => {
+      const th = (v.th * Math.PI) / 180;
+      const N = v.m * 9.8 * Math.cos(th);
+      const amax = 9.8 * (Math.sin(th) - v.mu * Math.cos(th));
+      const slides = amax > 1e-6;
+      const a = slides ? amax : 0;
+      const f = slides ? v.mu * N : v.m * 9.8 * Math.sin(th);
+      return {
+        resultSym: "a", resultValue: a, resultUnit: "m/s²",
+        resultText: slides
+          ? `The block accelerates down the plane at ${fmt(a)} m/s².`
+          : `Static friction holds the block: a = 0 (needs μ < tan θ = ${fmt(Math.tan(th), 3)}).`,
+        extras: [
+          { label: "Normal reaction N", value: `${fmt(N)} N` },
+          { label: "Friction force f", value: `${fmt(f)} N` },
+          { label: "g sinθ (drive)", value: `${fmt(9.8 * Math.sin(th))} m/s²` },
+          { label: "μg cosθ (brake)", value: `${fmt(9.8 * v.mu * Math.cos(th))} m/s²` },
+        ],
+        substitute: [`a = 9.8 × (sin ${fmt(v.th)}° − ${fmt(v.mu)} × cos ${fmt(v.th)}°)`],
+        calc: [`a = 9.8 × (${fmt(Math.sin(th), 4)} − ${fmt(v.mu * Math.cos(th), 4)}) = ${fmt(amax)} m/s²`],
+        meaning: slides
+          ? "Resolve weight into mg sinθ down the slope and mg cosθ into the slope. Friction brakes with μN; whatever is left sets the acceleration — and mass cancels, so every block slides identically."
+          : "Static friction is self-adjusting up to μN. Here its ceiling exceeds the downhill pull, so the block stays put.",
+        sanity: [
+          { ok: a <= 9.8001, note: "a ≤ g — a ramp can never beat free fall" },
+          { ok: v.mu <= 1.05, note: `μ = ${fmt(v.mu)} is a realistic coefficient` },
+        ],
+      };
+    },
+    why: {
+      simple: "Only the component of gravity parallel to the slope can pull the block along it — the rest is absorbed by the surface.",
+      math: "Rotate axes by θ: ΣF∥ = mg sinθ − μN with N = mg cosθ, so a = F∥/m = g(sinθ − μcosθ). m cancels everywhere.",
+      visual: "In the rig, red mg splits into two amber components; the blue downhill arrow minus the friction arrow is the net force.",
+    },
+    eli: {
+      hook: "Slide vs staircase",
+      analogy: "A playground slide is a gentle staircase. The steeper it is, the more of gravity's pull points along it.",
+      example: "Lie a book flat on a board and tilt slowly — it only slides once the tilt beats friction, exactly at tan θ = μ.",
+    },
+    teach: {
+      concept: "Weight is one force, but on a slope it has two jobs: press into the surface (mg cosθ) and pull downhill (mg sinθ).",
+      intuition: "Friction is proportional to the pressing job, so rougher surfaces and gentler slopes both reduce the downhill winner.",
+      example: "Ski wax lowers μ; a 30° slope with μ = 0.1 gives a = 9.8(0.5 − 0.087) = 4.05 m/s².",
+    },
+    quiz: {
+      q: "A block sits on a 30° slope with μ = 0.7. What happens? (tan 30° ≈ 0.577)",
+      options: ["It slides at 4.9 m/s²", "It stays at rest", "It slides at 9.8 m/s²", "It flies off"],
+      answer: 1,
+      explain: "Sliding needs μ < tan θ. Here 0.7 > 0.577, so static friction wins and a = 0.",
+    },
+    socratic: [
+      { q: "On a slope, is the full weight mg pulling the block downhill?", accept: ["no", "not all", "only part", "component"], hint: "Split mg into two directions — one into the slope, one along it.", follow: "Exactly — only mg sinθ acts along the plane; mg cosθ presses into it." },
+      { q: "If two blocks of different mass slide down the same frictionless slope, which lands first?", accept: ["same", "together", "both", "equal"], hint: "Write a = g sinθ. Where is the mass?", follow: "Right — mass cancels: both accelerate at g sinθ. Galileo was onto something." },
+    ],
+  },
+
+  /* ------------------------------------------------ circular motion */
+  circular: {
+    topic: "Mechanics",
+    name: "Circular Motion",
+    level: "Class 11",
+    simKind: "circular",
+    graphKind: "circ-v",
+    assumption: "Uniform circular motion; string/road supplies the centripetal force; no tangential forces.",
+    find: "Centripetal force F_c",
+    formula: "F_c = m v² / r",
+    formulaUnits: "kg · m/s²  =  N",
+    vars: [
+      V("m", "m", "Mass", "kg", 0.05, 200, 0.05, 0.15, BLUE),
+      V("v", "v", "Speed", "m/s", 0.5, 30, 0.1, 2.81, GREEN),
+      V("r", "r", "Radius", "m", 0.2, 5, 0.05, 0.8, AMBER),
+    ],
+    whatifPresets: [
+      { label: "Speed × 2", varId: "v", mult: 2 },
+      { label: "Radius × 2", varId: "r", mult: 2 },
+      { label: "Radius × ½", varId: "r", mult: 0.5 },
+      { label: "Mass × 2", varId: "m", mult: 2 },
+    ],
+    compute: (v) => {
+      const F = (v.m * v.v * v.v) / v.r;
+      const w = v.v / v.r;
+      const T = (2 * Math.PI * v.r) / v.v;
+      return {
+        resultSym: "F_c", resultValue: F, resultUnit: "N",
+        resultText: `The inward (centripetal) force needed is ${fmt(F)} N — supplied by the string tension here.`,
+        extras: [
+          { label: "Centripetal accel a_c", value: `${fmt(v.v * v.v / v.r)} m/s²` },
+          { label: "Angular speed ω", value: `${fmt(w)} rad/s` },
+          { label: "Period T", value: `${fmt(T)} s` },
+        ],
+        substitute: [`F = ${fmt(v.m)} × ${fmt(v.v)}² / ${fmt(v.r)}`],
+        calc: [`F = ${fmt(v.m)} × ${fmt(v.v * v.v, 4)} / ${fmt(v.r)} = ${fmt(F)} N`],
+        meaning: "Speed is constant but velocity keeps turning — that turning needs an inward force. Double the speed and the demand quadruples; halve the radius and it doubles.",
+        sanity: [
+          { ok: F < 1e5, note: "Force within everyday laboratory scale" },
+          { ok: v.v * v.v / v.r < 1e4, note: "Acceleration far below structural limits" },
+        ],
+      };
+    },
+    why: {
+      simple: "Something has to keep yanking the object inward, otherwise its natural straight-line motion takes over.",
+      math: "Velocity rotates at ω = v/r, so dv/dt has magnitude vω = v²/r toward the centre; Newton then demands F = mv²/r inward.",
+      visual: "The rig shows velocity tangential (blue) and force radial (red) — perpendicular at every instant, which is why speed never changes.",
+    },
+    eli: {
+      hook: "The bucket spin",
+      analogy: "Swing a bucket of water in a vertical circle fast enough and the water stays in — your arm plays the string.",
+      example: "In a turning car you feel pushed outward; really the car door is pushing you inward around the curve.",
+    },
+    teach: {
+      concept: "Centripetal force is not a new force — it's the name for whatever real force (tension, friction, gravity) points to the centre.",
+      intuition: "Sharp turn (small r) or high speed both demand more inward force; that's why highways bank curves.",
+      example: "NCERT example: 0.15 kg stone, r = 0.8 m, 14 rev in 25 s → v = 2.81 m/s → a_c = 9.9 m/s², F = 1.5 N.",
+    },
+    quiz: {
+      q: "A car doubles its speed on the same curve. The friction force needed to hold it…",
+      options: ["doubles", "quadruples", "halves", "is unchanged"],
+      answer: 1,
+      explain: "F = mv²/r: v² means doubling speed multiplies the demand by 4.",
+    },
+    socratic: [
+      { q: "In uniform circular motion, does the object accelerate even though its speed is constant?", accept: ["yes"], hint: "Acceleration is change of velocity — and velocity includes direction.", follow: "Yes! Direction changes continuously, so a = v²/r points inward." },
+      { q: "Which way must the net force point?", accept: ["center", "centre", "inward", "toward the center", "towards centre"], hint: "Same direction as the acceleration.", follow: "Correct — inward, toward the centre. That's why it's called centripetal." },
+    ],
+  },
+
+  /* ------------------------------------------------ torque */
+  torque: {
+    topic: "Mechanics",
+    name: "Torque & Levers",
+    level: "Class 11",
+    simKind: "torque",
+    graphKind: "torque-r",
+    assumption: "Force applied perpendicular to the lever arm; rigid beam about a fixed hinge.",
+    find: "Torque about the hinge",
+    formula: "τ = r F sin θ   (θ = 90° → τ = rF)",
+    formulaUnits: "N · m",
+    vars: [
+      V("F", "F", "Applied force", "N", 5, 100, 1, 20, RED),
+      V("r", "r", "Lever arm", "m", 0.1, 2, 0.05, 0.6, AMBER),
+    ],
+    whatifPresets: [
+      { label: "Double arm", varId: "r", mult: 2 },
+      { label: "Arm × ½", varId: "r", mult: 0.5 },
+      { label: "Force × 2", varId: "F", mult: 2 },
+    ],
+    compute: (v) => {
+      const tau = v.F * v.r;
+      return {
+        resultSym: "τ", resultValue: tau, resultUnit: "N·m",
+        resultText: `The torque about the hinge is ${fmt(tau)} N·m (anticlockwise for a push as drawn).`,
+        extras: [
+          { label: "If θ were 30°", value: `${fmt(v.F * v.r * 0.5)} N·m` },
+          { label: "Force for same τ at 2r", value: `${fmt(v.F / 2)} N` },
+        ],
+        substitute: [`τ = ${fmt(v.r)} m × ${fmt(v.F)} N × sin 90°`],
+        calc: [`τ = ${fmt(tau)} N·m`],
+        meaning: "Turning effect is force times distance from the pivot. Door handles live at the far edge and wrenches are long for this exact reason: the same force, more torque.",
+        sanity: [{ ok: tau < 500, note: "Torque within human-hand scale (< 500 N·m)" }],
+      };
+    },
+    why: {
+      simple: "The further from the hinge you push, the more each newton gets multiplied into turning.",
+      math: "τ = r × F; with θ = 90° the cross product gives rF. Equilibrium needs Στ = 0 — the lever's trade of force for distance.",
+      visual: "The beam rig shows the moment arm; slide the force outward and the beam swings faster with the identical force.",
+    },
+    eli: {
+      hook: "The stubborn jar",
+      analogy: "A wrench is a force amplifier: your hand pushes gently at the long end, the nut feels a big twist.",
+      example: "Pushing a door near the hinge barely moves it — same you, same push, almost zero torque.",
+    },
+    teach: {
+      concept: "Torque is the rotational cousin of force: it measures how hard something twists about a point.",
+      intuition: "Archimedes' lever: give me a place to stand and a long enough beam, and a child can lift a car.",
+      example: "A seesaw balances when m₁g·r₁ = m₂g·r₂ — torque equilibrium, not force equilibrium.",
+    },
+    quiz: {
+      q: "To loosen a tight bolt with minimum effort you should…",
+      options: ["push harder near the bolt", "use a longer wrench", "push along the wrench", "it cannot change"],
+      answer: 1,
+      explain: "τ = rF: increasing r multiplies torque for the same force.",
+    },
+    socratic: [
+      { q: "Why are door handles placed far from the hinge?", accept: ["more torque", "bigger lever", "longer arm", "easier to open", "larger r"], hint: "Think τ = rF with the same F.", follow: "Exactly — bigger r, bigger torque for the same push." },
+      { q: "Pushing a wrench along its length produces what torque?", accept: ["zero", "none", "0"], hint: "What is sin 0°?", follow: "Zero — force through the pivot has no moment arm." },
+    ],
+  },
+
+  /* ------------------------------------------------ buoyancy */
+  buoyancy: {
+    topic: "Mechanics",
+    name: "Buoyancy (Archimedes)",
+    level: "Class 9",
+    simKind: "buoyancy",
+    graphKind: "buoy-rho",
+    assumption: "Fresh water ρ_f = 1000 kg/m³; incompressible fluid; block at rest or fully supported.",
+    find: "Buoyant force F_b",
+    formula: "F_b = ρ_f V_sub g",
+    formulaUnits: "kg/m³ · m³ · m/s²  =  N",
+    vars: [
+      V("rho", "ρ", "Object density", "kg/m³", 100, 2000, 10, 600, BLUE),
+      V("V", "V", "Volume", "m³", 0.0005, 5, 0.0005, 0.005, GREEN),
+    ],
+    whatifPresets: [
+      { label: "ρ → 400 (cork)", varId: "rho", mult: -400 },
+      { label: "ρ → 1200 (sinks)", varId: "rho", mult: -1200 },
+      { label: "Volume × 2", varId: "V", mult: 2 },
+    ],
+    compute: (v) => {
+      const rhoF = 1000;
+      const W = v.rho * v.V * 9.8;
+      const floats = v.rho < rhoF;
+      const Vsub = floats ? v.V * (v.rho / rhoF) : v.V;
+      const Fb = rhoF * Vsub * 9.8;
+      return {
+        resultSym: "F_b", resultValue: Fb, resultUnit: "N",
+        resultText: floats
+          ? `The block floats with ${fmt((v.rho / rhoF) * 100)}% submerged; buoyancy exactly balances its weight: F_b = ${fmt(Fb)} N.`
+          : `The block sinks; fully submerged buoyancy is ${fmt(Fb)} N, leaving an apparent weight of ${fmt(W - Fb)} N.`,
+        extras: [
+          { label: "Weight W", value: `${fmt(W)} N` },
+          { label: "Submerged volume", value: `${fmt(Vsub, 4)} m³` },
+          floats ? { label: "Status", value: "floating — F_b = W" } : { label: "Apparent weight", value: `${fmt(W - Fb)} N` },
+        ],
+        substitute: [`F_b = 1000 × ${fmt(Vsub, 4)} × 9.8`],
+        calc: [`F_b = ${fmt(Fb)} N`],
+        meaning: "The fluid pushes up with the weight of whatever it was asked to make room for. If that push can match the object's weight, it floats; otherwise it sinks but feels lighter.",
+        sanity: [
+          { ok: v.rho > 50 && v.rho < 25000, note: "Density within everyday materials" },
+          { ok: Fb < 1e6, note: "Force within tank scale" },
+        ],
+      };
+    },
+    why: {
+      simple: "Pressure grows with depth, so the fluid pushes harder on the block's bottom than its top — the leftover push is buoyancy.",
+      math: "Integrate ρ_f g z over the submerged surface: the net equals the weight of displaced fluid, ρ_f V_sub g (Archimedes).",
+      visual: "The tank shows the waterline settling exactly where displaced water weighs the same as the block.",
+    },
+    eli: {
+      hook: "The bathtub crown",
+      analogy: "Get into a full bath and water spills out — that spilled water is what's lifting you.",
+      example: "A steel ship floats because its hull shape displaces a huge volume; solid steel would sink.",
+    },
+    teach: {
+      concept: "Floating is a vote between two weights: the object's, and the water it displaces.",
+      intuition: "Ice floats with 90% under water because 900/1000 = 0.9 — the submerged fraction is simply ρ_object/ρ_water.",
+      example: "Submarine ballast tanks flood to raise average density past 1000 kg/m³ — then it sinks.",
+    },
+    quiz: {
+      q: "An object of density 800 kg/m³ floats in water. What fraction is submerged?",
+      options: ["20%", "80%", "100%", "50%"],
+      answer: 1,
+      explain: "At float, ρ_obj V g = ρ_w V_sub g → V_sub/V = 800/1000 = 0.8.",
+    },
+    socratic: [
+      { q: "A floating block isn't moving. What does that say about the forces on it?", accept: ["balanced", "equal", "same", "net zero"], hint: "Weight down, buoyancy up…", follow: "Yes — F_b equals its weight exactly. That's the float condition." },
+      { q: "Why does a steel ship float but a steel nail sinks?", accept: ["shape", "displaces", "hollow", "volume", "average density"], hint: "Compare the average density of ship-with-air to solid steel.", follow: "Right — the hull encloses air, lowering average density below water's." },
+    ],
+  },
+
+  /* ------------------------------------------------ atwood machine */
+  atwood: {
+    topic: "Mechanics",
+    name: "Atwood Machine",
+    level: "Class 11",
+    simKind: "atwood",
+    graphKind: "atwood-a",
+    assumption: "Massless inextensible string, frictionless pulley; both masses share |a| and tension T.",
+    find: "Acceleration of the system",
+    formula: "a = (m₁ − m₂) g / (m₁ + m₂)",
+    formulaUnits: "m/s²",
+    vars: [
+      V("m1", "m₁", "Left mass", "kg", 1, 100, 0.5, 5, BLUE),
+      V("m2", "m₂", "Right mass", "kg", 1, 100, 0.5, 3, GREEN),
+    ],
+    whatifPresets: [
+      { label: "m₂ = m₁ (balance)", varId: "m2", mult: -5 },
+      { label: "m₂ × ½", varId: "m2", mult: 0.5 },
+      { label: "m₁ × 2", varId: "m1", mult: 2 },
+    ],
+    compute: (v) => {
+      const a = ((v.m1 - v.m2) * 9.8) / (v.m1 + v.m2);
+      const T = (2 * v.m1 * v.m2 * 9.8) / (v.m1 + v.m2);
+      return {
+        resultSym: "a", resultValue: a, resultUnit: "m/s²",
+        resultText: a > 0.0005
+          ? `The heavier side (m₁) accelerates down at ${fmt(a)} m/s².`
+          : a < -0.0005
+            ? `The heavier side (m₂) accelerates down at ${fmt(-a)} m/s².`
+            : "The masses balance — a = 0, pure equilibrium.",
+        extras: [
+          { label: "String tension T", value: `${fmt(T)} N` },
+          { label: "T vs m₁g", value: `${fmt(v.m1 * 9.8)} N (T < m₁g — it's accelerating)` },
+          { label: "T vs m₂g", value: `${fmt(v.m2 * 9.8)} N (T > m₂g — it's being lifted)` },
+        ],
+        substitute: [`a = (${fmt(v.m1)} − ${fmt(v.m2)}) × 9.8 / (${fmt(v.m1)} + ${fmt(v.m2)})`],
+        calc: [`a = ${fmt((v.m1 - v.m2) * 9.8, 3)} / ${fmt(v.m1 + v.m2)} = ${fmt(a)} m/s²`],
+        meaning: "The net pull is the weight difference; the inertia is the total mass. Equal masses freeze the machine; tiny differences give gentle, measurable accelerations — that's why Atwood built it.",
+        sanity: [
+          { ok: Math.abs(a) <= 9.8001, note: "|a| ≤ g — bounded by free fall" },
+          { ok: T > 0, note: "Tension positive — string stays taut" },
+        ],
+      };
+    },
+    why: {
+      simple: "The heavier mass wins the tug-of-war, but it has to drag the lighter one too — so nobody falls at full g.",
+      math: "m₁g − T = m₁a and T − m₂g = m₂a; adding eliminates T: a = (m₁−m₂)g/(m₁+m₂).",
+      visual: "The rig shows both tension vectors equal and opposite on the string — one rope, one tension, one acceleration.",
+    },
+    eli: {
+      hook: "The playground pulley",
+      analogy: "Two kids on a rope over a branch: the heavier one slides down slowly because the lighter one holds on.",
+      example: "With 5 kg vs 3 kg you'd expect a crash at g, but the system only does 2.45 m/s² — a quarter of free fall.",
+    },
+    teach: {
+      concept: "One constraint ties both masses: same rope, same |a|. Newton's second law applied twice plus the constraint solves everything.",
+      intuition: "Weight difference drives; total mass resists. That ratio is the whole story.",
+      example: "Cranes use counterweights so the motor only overcomes a small net force — the Atwood trick at industrial scale.",
+    },
+    quiz: {
+      q: "m₁ = m₂ in an Atwood machine. The tension in the string equals…",
+      options: ["zero", "m g", "2 m g", "m g / 2"],
+      answer: 1,
+      explain: "a = 0, so each mass balances: T = m g exactly.",
+    },
+    socratic: [
+      { q: "If m₁ = m₂, what is the acceleration?", accept: ["zero", "0", "none"], hint: "What is the net driving force?", follow: "Zero — equal weights cancel; the machine sits in equilibrium." },
+      { q: "Is the tension bigger or smaller than m₁g while m₁ falls?", accept: ["smaller", "less", "lower"], hint: "If T equalled m₁g, would m₁ accelerate at all?", follow: "Smaller — the leftover m₁g − T is what accelerates m₁ down." },
+    ],
+  },
+
+  /* ------------------------------------------------ ideal gas law */
+  idealgas: {
+    topic: "Thermodynamics",
+    name: "Ideal Gas Law",
+    level: "Class 11",
+    simKind: "gas",
+    graphKind: "gas-pt",
+    assumption: "Point particles, elastic collisions, no interactions — the ideal gas model (good at low density, high T).",
+    find: "Pressure of the gas",
+    formula: "P V = n R T",
+    formulaUnits: "Pa · m³  =  mol · J/(mol·K) · K",
+    vars: [
+      V("n", "n", "Amount of gas", "mol", 0.05, 5, 0.05, 2, BLUE),
+      V("T", "T", "Temperature", "K", 100, 600, 5, 300, RED),
+      V("V", "V", "Volume", "m³", 0.002, 0.3, 0.002, 0.1, GREEN),
+    ],
+    whatifPresets: [
+      { label: "T × 2", varId: "T", mult: 2 },
+      { label: "V × ½", varId: "V", mult: 0.5 },
+      { label: "T → 100 K", varId: "T", mult: -100 },
+      { label: "n × 2", varId: "n", mult: 2 },
+    ],
+    compute: (v) => {
+      const R = 8.314;
+      const P = (v.n * R * v.T) / v.V;
+      const N = v.n * 6.022e23;
+      const vrms = Math.sqrt((3 * R * v.T) / 0.028); // N₂ molar mass
+      return {
+        resultSym: "P", resultValue: P, resultUnit: "Pa",
+        resultText: `The gas exerts ${fmt(P)} Pa (${fmt(P / 101325, 3)} atm). Particle speed ∝ √T — watch the chamber.`,
+        extras: [
+          { label: "In kilopascals", value: `${fmt(P / 1000)} kPa` },
+          { label: "Molecules N = nN_A", value: N.toExponential(2) },
+          { label: "v_rms (N₂)", value: `${fmt(vrms)} m/s` },
+        ],
+        substitute: [`P = ${fmt(v.n)} × 8.314 × ${fmt(v.T)} / ${fmt(v.V)}`],
+        calc: [`P = ${fmt(v.n * R * v.T, 4)} / ${fmt(v.V)} = ${fmt(P)} Pa`],
+        meaning: "Pressure is billions of tiny collisions per second. Heat the gas (raise T) and each hit is harder; squeeze it (lower V) and hits get more frequent. PV = nRT is the ledger that balances both.",
+        sanity: [
+          { ok: P < 1e7, note: "Below ~100 atm — vessel-safe region" },
+          { ok: v.T >= 100, note: "Well above condensation for common gases" },
+        ],
+      };
+    },
+    why: {
+      simple: "Gas pressure is just molecules bouncing off walls — temperature makes them bounce harder, volume decides how often.",
+      math: "From kinetic theory, P = ⅓(N/V)m⟨v²⟩ with ½m⟨v²⟩ = 3/2 k_B T; substituting N = nN_A and R = N_A k_B yields PV = nRT.",
+      visual: "In the chamber, raise T and the dots visibly speed up while the pressure readout climbs in lockstep.",
+    },
+    eli: {
+      hook: "The bouncy-ball room",
+      analogy: "Imagine a room full of super-bouncy balls. More balls, faster balls, or a smaller room — all push the walls harder.",
+      example: "A hot car tyre reads higher pressure in summer: same air, same volume, higher T.",
+    },
+    teach: {
+      concept: "PV = nRT unifies Boyle (P∝1/V), Charles (V∝T) and Avogadro (V∝n) into one surface.",
+      intuition: "Hold any two quantities fixed and the third is pinned — that's why tyres, cookers and balloons all obey it.",
+      example: "2 mol at 300 K in 0.1 m³: P = 2 × 8.314 × 300 / 0.1 ≈ 4.99 × 10⁴ Pa ≈ 0.49 atm.",
+    },
+    quiz: {
+      q: "A sealed gas is heated from 300 K to 600 K at constant volume. Its pressure…",
+      options: ["halves", "doubles", "stays the same", "quadruples"],
+      answer: 1,
+      explain: "P = nRT/V with n, V fixed → P ∝ T. Double T, double P.",
+    },
+    socratic: [
+      { q: "Squeeze a sealed syringe (smaller V, same T). What happens to the pressure?", accept: ["increases", "goes up", "rises", "higher"], hint: "Boyle's law — same collisions, less room.", follow: "Up it goes: P ∝ 1/V at fixed temperature." },
+      { q: "Why does a balloon expand near a heater?", accept: ["molecules faster", "pressure", "volume increases", "t expands"], hint: "Charles: V ∝ T at constant pressure.", follow: "Exactly — hotter molecules push the skin out until inside pressure matches the air again." },
     ],
   },
 };

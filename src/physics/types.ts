@@ -15,7 +15,13 @@ export type ConceptId =
   | "orbit"
   | "work"
   | "gravforce"
-  | "refraction";
+  | "refraction"
+  | "incline"
+  | "circular"
+  | "torque"
+  | "buoyancy"
+  | "atwood"
+  | "idealgas";
 
 export type SimKind =
   | "bench"
@@ -28,7 +34,12 @@ export type SimKind =
   | "waves"
   | "optics"
   | "gas"
-  | "orbit";
+  | "orbit"
+  | "incline"
+  | "circular"
+  | "torque"
+  | "buoyancy"
+  | "atwood";
 
 export type GraphKind =
   | "ke-v"
@@ -45,7 +56,13 @@ export type GraphKind =
   | "orbit-v"
   | "work-d"
   | "grav-r"
-  | "snell";
+  | "snell"
+  | "incline-a"
+  | "circ-v"
+  | "torque-r"
+  | "buoy-rho"
+  | "atwood-a"
+  | "gas-pt";
 
 export interface VarDef {
   id: string;
@@ -99,6 +116,7 @@ export interface Solved {
   type: "Numerical" | "Conceptual";
   level: string;
   question: string;
+  source?: string; // textbook citation when the problem comes from a published source
   variables: VarDef[];
   given: Given[];
   find: string;
@@ -157,4 +175,26 @@ export interface MistakeReport {
   correctFormula: string;
   correctAnswer: number | null;
   lines: string[];
+}
+
+export interface TextbookProblem {
+  id: string;
+  source: string; // textbook name
+  chapter: string;
+  q: string; // full problem statement, solvable by the engine
+  concept: ConceptId;
+  values: Record<string, number>; // keyed by variable id — exact textbook numbers
+  textbookAnswer: string; // the printed answer, for verification
+  level: "Class 9" | "Class 11" | "Class 12" | "University";
+}
+
+export interface RealWorldExperiment {
+  id: string;
+  icon: string;
+  title: string;
+  setting: string; // where you meet it in daily life
+  physics: string[]; // the physics hiding inside it
+  q: string; // the question the lab will actually solve
+  concept: ConceptId;
+  values: Record<string, number>;
 }

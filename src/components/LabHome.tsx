@@ -76,6 +76,15 @@ export function LabHome({ onAsk, onOpenLab }: { onAsk: (q: string) => void; onOp
                 {ex}
               </button>
             ))}
+            <span className="mx-1 h-3 w-px bg-line" />
+            <button type="button" onClick={() => onOpenLab("__bank")}
+              className="btn-press cursor-pointer border border-line bg-panel px-2 py-1 font-mono text-[10px] text-energy transition-colors hover:border-energy">
+              ◫ Textbook bank
+            </button>
+            <button type="button" onClick={() => onOpenLab("__real")}
+              className="btn-press cursor-pointer border border-line bg-panel px-2 py-1 font-mono text-[10px] text-motion transition-colors hover:border-motion">
+              ◔ Real-life experiments
+            </button>
           </div>
         </div>
 
